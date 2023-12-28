@@ -25,6 +25,31 @@ async fn fetch_weather(lat_long: LatLong) -> Result<WeatherResponse, anyhow::Err
 	Ok(response)
 }
 
+// the above two methods are what query the interwebs for data, but we can be smarter about it if we 
+// use caching to see if the city has already been queried from the internet
+async fn get_lat_long(pool: &PgPool, name: &str) -> Result<LatLong, anyhow::Error> {
+    let lat_long = sqlx::query_as::<_,LatLong>(
+        "SELECT latitude,longitude FROM cities WHERE name=$1",
+    )
+    .bind(name)
+    .fetch_optional(pool)
+    .await?;
+
+    if let Some(lat_long) = lat_long {
+        println!("We found something");
+    	return Ok(lat_long);
+	}
+
+    let lat_long = fetch_lat_long(name).await?;
+    sqlx::query("INSERT INTO cities (name, latitude, longitude) VALUES ($1, $2, $3)")
+        .bind(name)
+        .bind(lat_long.latitude)
+        .bind(lat_long.longitude)
+        .execute(pool)
+        .await?;
+    Ok(lat_long)
+
+}
 //the problem with city: string below is that the String type is not a valid extractor 
 //for the data. We need to use an extractor that deserializes query strings into some type.
 // it is a template, whose specialization
@@ -36,7 +61,8 @@ async fn weather(
     Query(params): Query<WeatherQuery>,
     State(pool): State<PgPool>
 ) -> Result<WeatherDisplay, AppError> {
-	let lat_long = fetch_lat_long(&params.city).await?;
+	// let lat_long = fetch_lat_long(&params.city).await?;
+    let lat_long = get_lat_long(&pool, &params.city).await?;
 	let weather = fetch_weather(lat_long).await?;
 	Ok(WeatherDisplay::new(params.city, weather))
 }

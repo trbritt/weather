@@ -3,7 +3,7 @@ use askama::Template;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use anyhow;
-// use sqlx;
+use sqlx;
 // pub fn into_response<T: Template>(t: &T) -> Response {
 //     match t.render() {
 //         Ok(body) => {
@@ -53,7 +53,7 @@ pub struct GeoResponse {
 //automatically derive the Deserialize trait for our structs. 
 //These derive macros are very powerful and allow us to do a lot of 
 //things with very little code, including handling parsing errors for our types
-#[derive(Deserialize, Debug, Clone)]
+#[derive(sqlx::FromRow, Deserialize, Debug, Clone)]
 pub struct LatLong {
     pub latitude: f64,
     pub longitude: f64,
