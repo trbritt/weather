@@ -142,6 +142,14 @@ func extractWeatherData(city string, rawWeather string) (WeatherDisplay, error) 
 		Forecasts: forecasts,
 	}, nil
 }
+func getLastCities(db *sqlx.DB) ([]string, error) {
+    var cities []string
+    err := db.Select(&cities, "SELECT name FROM cities ORDER BY id DESC LIMIT 10")
+    if err != nil {
+   	 return nil, err
+    }
+    return cities, nil
+}
 func main() {
 	// db := sqlx.MustConnect("postgres", os.Getenv("DATABASE_URL"))
 	db, err := sqlx.Connect("pgx", os.Getenv("DATABASE_URL"))
@@ -150,6 +158,16 @@ func main() {
 	}
 	r := gin.Default()
 	r.LoadHTMLGlob("views/*")
+	r.GET("/stats", gin.BasicAuth(gin.Accounts{
+		"forecast": "forecast",
+		}), func(c *gin.Context) {
+		cities, err := getLastCities(db)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.HTML(http.StatusOK, "stats.html", cities)
+	})
 	r.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
