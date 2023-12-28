@@ -5,52 +5,60 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"time"
-	// "log"
 	"net/http"
 	"net/url"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/jackc/pgx/v5/stdlib" // Standard library bindings for pgx
+	"github.com/jmoiron/sqlx"
 )
 
 type GeoResponse struct {
-    // A list of results; we only need the first one
-    Results []LatLong `json:"results"`
+	// A list of results; we only need the first one
+	Results []LatLong `json:"results"`
 }
 
 type LatLong struct {
-    Latitude  float64 `json:"latitude"`
-    Longitude float64 `json:"longitude"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }
 
 type WeatherResponse struct {
-    Latitude  float64 `json:"latitude"`
-    Longitude float64 `json:"longitude"`
-    Timezone  string  `json:"timezone"`
-    Hourly	struct {
-   	 Time      	[]string  `json:"time"`
-   	 Temperature2m []float64 `json:"temperature_2m"`
-    } `json:"hourly"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	Timezone  string  `json:"timezone"`
+	Hourly    struct {
+		Time          []string  `json:"time"`
+		Temperature2m []float64 `json:"temperature_2m"`
+	} `json:"hourly"`
 }
 
 type WeatherDisplay struct {
-    City  	string
-    Forecasts []Forecast
+	City      string
+	Forecasts []Forecast
 }
 
 type Forecast struct {
-    Date    	string
-    Temperature string
+	Date        string
+	Temperature string
 }
 
-func getLatLong(city string) (*LatLong, error) {
+// this will insert values into our local postgres db for caching
+func insertCity(db *sqlx.DB, name string, latLong LatLong) error {
+	_, err := db.Exec("INSERT INTO cities (name, latitude, longitude) VALUES ($1, $2, $3)", name, latLong.Latitude, latLong.Longitude)
+	return err
+}
+
+func fetchLatLong(city string) (*LatLong, error) {
 	endpoint := fmt.Sprintf("https://geocoding-api.open-meteo.com/v1/search?name=%s&count=1&language=en&format=json", url.QueryEscape(city))
 	resp, err := http.Get(endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("error making request to Geo API: %w", err)
 	}
-	//The defer statement ensures that the response body is closed after the function returns. 
-	//This is a common pattern in Go to avoid resource leaks. The compiler does not warn us 
+	//The defer statement ensures that the response body is closed after the function returns.
+	//This is a common pattern in Go to avoid resource leaks. The compiler does not warn us
 	//in case we forget, so we need to be careful here
 	defer resp.Body.Close()
 
@@ -64,9 +72,41 @@ func getLatLong(city string) (*LatLong, error) {
 	return &response.Results[0], nil
 }
 
-//we'll now make a new function that will take a LatLong and retun the weather forecast
+func getLatLong(db *sqlx.DB, name string) (*LatLong, error) {
+	var latLong *LatLong
+	qryStr := fmt.Sprintf("SELECT latitude,longitude FROM cities WHERE name='%s'", name)
+	// err := db.Get(&latLong, qryStr)
+	rows, err := db.Query(qryStr)
+	if err == nil {
+		for rows.Next() {
+			// fmt.Println(rows)
+			// err = rows.StructScan(latLong)
+			var local_lat float64
+			var local_long float64
+			err = rows.Scan(&local_lat, &local_long)
+			if err == nil {
+				local_latLong := LatLong{
+					Latitude:  local_lat,
+					Longitude: local_long,
+				}
+				return &local_latLong, nil
+			}
+		}
+	}
+	latLong, err = fetchLatLong(name)
+	if err != nil {
+		return nil, err
+	}
+	err = insertCity(db, name, *latLong)
+	if err != nil {
+		return nil, err
+	}
+	return latLong, nil
+}
+
+// we'll now make a new function that will take a LatLong and retun the weather forecast
 func getWeather(latLong LatLong) (string, error) {
-    endpoint := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%.6f&longitude=%.6f&hourly=temperature_2m", latLong.Latitude, latLong.Longitude)
+	endpoint := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%.6f&longitude=%.6f&hourly=temperature_2m", latLong.Latitude, latLong.Longitude)
 	resp, err := http.Get(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("error making request to weather api: %w", err)
@@ -79,7 +119,7 @@ func getWeather(latLong LatLong) (string, error) {
 	return string(body), nil
 }
 
-//lets now make a function that parses the weather JSON output into a more friendly format
+// lets now make a function that parses the weather JSON output into a more friendly format
 func extractWeatherData(city string, rawWeather string) (WeatherDisplay, error) {
 	var weatherResponse WeatherResponse
 	if err := json.Unmarshal([]byte(rawWeather), &weatherResponse); err != nil {
@@ -92,17 +132,22 @@ func extractWeatherData(city string, rawWeather string) (WeatherDisplay, error) 
 			return WeatherDisplay{}, err
 		}
 		forecast := Forecast{
-			Date: date.Format("Mon 15:04"),
-   		 	Temperature: fmt.Sprintf("%.1f°C", weatherResponse.Hourly.Temperature2m[i]),
+			Date:        date.Format("Mon 15:04"),
+			Temperature: fmt.Sprintf("%.1f°C", weatherResponse.Hourly.Temperature2m[i]),
 		}
 		forecasts = append(forecasts, forecast)
 	}
 	return WeatherDisplay{
-		City: city,
+		City:      city,
 		Forecasts: forecasts,
 	}, nil
 }
 func main() {
+	// db := sqlx.MustConnect("postgres", os.Getenv("DATABASE_URL"))
+	db, err := sqlx.Connect("pgx", os.Getenv("DATABASE_URL"))
+	if err != nil {
+		fmt.Errorf("Could not connect to db: %w", err)
+	}
 	r := gin.Default()
 	r.LoadHTMLGlob("views/*")
 	r.GET("/", func(c *gin.Context) {
@@ -110,9 +155,9 @@ func main() {
 	})
 	r.GET("/weather", func(c *gin.Context) {
 		city := c.Query("city")
-		latlong, err := getLatLong(city)
+		latlong, err := getLatLong(db, city)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		weather, err := getWeather(*latlong)
