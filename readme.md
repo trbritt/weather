@@ -5,7 +5,7 @@ out which I want to seriously consider for which projects in the near future.
 
 Not for production. Inspired by [this blog post](https://www.shuttle.rs/blog/2023/09/27/rust-vs-go-comparison). 
 
-These programs can be run with `go run` or `cargo run` from the respective directories, and requier the existence of a `postgresSQL` server + databaes running on the local host. In this example, the `postgres` user, password, and database name are all `forecast`, and the code replies on the definition of the following environment variable:
+These programs can be run with `go run` or `cargo run` from the respective directories, and require the existence of a `postgresSQL` server + database running on the local host. In this example, the `postgres` user, password, and database name are all `forecast`, and the code replies on the definition of the following environment variable:
 
 ```bash
 export DATABASE_URL="postgres://forecast:forecast@localhost/forecast?sslmode=disable"
