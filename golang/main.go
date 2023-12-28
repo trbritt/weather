@@ -14,7 +14,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib" // Standard library bindings for pgx
 	"github.com/jmoiron/sqlx"
 )
-
+//The json tags tell the JSON decoder how to map the JSON fields to the struct fields. 
+//Extra fields in the JSON response are ignored by default.
 type GeoResponse struct {
 	// A list of results; we only need the first one
 	Results []LatLong `json:"results"`
