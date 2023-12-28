@@ -38,7 +38,7 @@ async fn get_lat_long(pool: &PgPool, name: &str) -> Result<LatLong, anyhow::Erro
     .await?;
 
     if let Some(lat_long) = lat_long {
-        println!("We found something");
+        // println!("We found something");
     	return Ok(lat_long);
 	}
 
