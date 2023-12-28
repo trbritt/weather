@@ -1,8 +1,10 @@
-use std::{net::SocketAddr};
+use std::net::SocketAddr;
 use axum::{routing::get, Router, extract::{Query, State}};
 use anyhow::Context;
 use sqlx::PgPool;
 // use axum_macros;
+mod users;
+use crate::users::User;
 mod utils;
 use crate::utils::*;
 
@@ -67,14 +69,20 @@ async fn weather(
 	Ok(WeatherDisplay::new(params.city, weather))
 }
 
-
+async fn get_last_cities(pool: &PgPool) -> Result<Vec<City>, AppError> {
+    let cities = sqlx::query_as::<_, City>("SELECT name FROM cities ORDER BY id DESC LIMIT 10")
+        .fetch_all(pool)
+        .await?;
+    Ok(cities)
+}
 //basic handler that repsonds with a static string
 // #[axum_macros::debug_handler]
 async fn index() -> IndexTemplate {
 	IndexTemplate
 }
-async fn stats() -> &'static str {
-    "Stats"
+async fn stats(_user: User, State(pool): State<PgPool>) -> Result<StatsTemplate, AppError> {
+	let cities = get_last_cities(&pool).await?;
+	Ok(StatsTemplate { cities })
 }
 
 #[tokio::main]

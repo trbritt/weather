@@ -2258,6 +2258,7 @@ dependencies = [
  "askama_axum",
  "axum",
  "axum-macros",
+ "base64",
  "reqwest",
  "serde",
  "serde_json",

@@ -4,19 +4,7 @@ use reqwest::StatusCode;
 use serde::Deserialize;
 use anyhow;
 use sqlx;
-// pub fn into_response<T: Template>(t: &T) -> Response {
-//     match t.render() {
-//         Ok(body) => {
-//             let headers = [(
-//                 http::header::CONTENT_TYPE,
-//                 http::HeaderValue::from_static(T::MIME_TYPE),
-//             )];
 
-//             (headers, body).into_response()
-//         }
-//         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
-//     }
-// }
 // Make our own error that wraps `anyhow::Error`.
 pub struct AppError(anyhow::Error);
 
@@ -88,7 +76,16 @@ pub struct WeatherDisplay {
 #[derive(Template)]
 #[template(path = "index.html")]
 pub struct IndexTemplate;
+#[derive(sqlx::FromRow, Deserialize, Debug)]
+pub struct City {
+    pub name: String
+}
 
+#[derive(Template,Deserialize, Debug)]
+#[template(path = "stats.html")]
+pub struct StatsTemplate {
+	pub cities: Vec<City>,
+}
 
 #[derive(Deserialize, Debug)]
 pub struct Forecast {
@@ -122,6 +119,12 @@ impl IntoResponse for WeatherDisplay {
     }
 }
 impl IntoResponse for IndexTemplate {
+    fn into_response(self) -> Response {
+        let body = Html(self.render().unwrap()); // Use the render method from the askama template
+        body.into_response()
+    }
+}
+impl IntoResponse for StatsTemplate {
     fn into_response(self) -> Response {
         let body = Html(self.render().unwrap()); // Use the render method from the askama template
         body.into_response()

@@ -12,6 +12,7 @@ askama_axum = "0.4.0"
 # web framework
 axum = "0.6.20"
 axum-macros = "0.4.0"
+base64 = "0.21.5"
 # async HTTP client
 reqwest = { version = "0.11.20", features = ["json"] }
 # serialization/deserialization  for JSON
