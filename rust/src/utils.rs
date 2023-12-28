@@ -1,8 +1,22 @@
-use axum::response::{Response,IntoResponse};
+use axum::response::{IntoResponse, Response, Html};
+use askama::Template;
 use reqwest::StatusCode;
 use serde::Deserialize;
 use anyhow;
+// use sqlx;
+// pub fn into_response<T: Template>(t: &T) -> Response {
+//     match t.render() {
+//         Ok(body) => {
+//             let headers = [(
+//                 http::header::CONTENT_TYPE,
+//                 http::HeaderValue::from_static(T::MIME_TYPE),
+//             )];
 
+//             (headers, body).into_response()
+//         }
+//         Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
+//     }
+// }
 // Make our own error that wraps `anyhow::Error`.
 pub struct AppError(anyhow::Error);
 
@@ -64,11 +78,17 @@ pub struct Hourly {
 	pub temperature_2m: Vec<f64>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Template,Deserialize, Debug)]
+#[template(path = "weather.html")]
 pub struct WeatherDisplay {
 	pub city: String,
 	pub forecasts: Vec<Forecast>,
 }
+
+#[derive(Template)]
+#[template(path = "index.html")]
+pub struct IndexTemplate;
+
 
 #[derive(Deserialize, Debug)]
 pub struct Forecast {
@@ -86,12 +106,25 @@ impl WeatherDisplay {
                 .iter()
                 .zip(response.hourly.temperature_2m.iter())
                 .map(|(date, temperature)| Forecast {
-                    date: date.to_string(),
+                    date:   date.to_string(),
                     temperature: temperature.to_string()
                 })
                 .collect(),
         };
         display
+    }
+}
+
+impl IntoResponse for WeatherDisplay {
+    fn into_response(self) -> Response {
+        let body = Html(self.render().unwrap()); // Use the render method from the askama template
+        body.into_response()
+    }
+}
+impl IntoResponse for IndexTemplate {
+    fn into_response(self) -> Response {
+        let body = Html(self.render().unwrap()); // Use the render method from the askama template
+        body.into_response()
     }
 }
 // below is a version of the weather handler that uses a mix of parsing and handler logic.
