@@ -1,18 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Weather Forecast{% endblock %}
+{% block content %}
 <form action="/weather" method="get">
-  <!doctype html>
-  <html>
-    <head>
-      <link href="/assets/main.css" rel="stylesheet" />
-      <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
-      <title>Weather Forecast</title>
-    </head>
-    <body>
-      <h1>Weather Forecast</h1>
-      <form action="/weather" method="get">
-        <label for="city">City:</label>
-        <input type="text" id="city" name="city" />
-        <input type="submit" value="Submit" />
-      </form>
-    </body>
-  </html>
+  <h1 class="font-bold text-green-500">Weather Forecast</h1>
+  <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/weather" method="get">
+    <div class="mb-4">
+      <label class="block text-gray-700 text-sm font-bold mb-2" for="City">
+        City
+      </label>
+      <input class="shadow appearance-none border rounded py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" id="city" type="text" name="city" placeholder="City">
+    </div>
+    <input class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit" value="Submit" />
+  </form>
 </form>
+{% endblock %}

@@ -1,28 +1,40 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <link href="/assets/main.css" rel="stylesheet" />
-    <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
-    <meta charset="UTF-8" />
-    <title>Weather</title>
-  </head>
-  <body>
-    <h1>Weather for {{ city }}</h1>
-    <table border="1">
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Temperature</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for forecast in forecasts %}
-        <tr>
-          <td>{{ forecast.date }}</td>
-          <td>{{ forecast.temperature }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </body>
-</html>
+{% extends "base.html" %}
+{% block title %}Weather{% endblock %}
+{% block content %}
+<h1>Weather for {{ city }}</h1>
+<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md bg-clip-border rounded-xl">
+
+<table class="text-left table-auto">
+  <thead>
+    <tr>
+      <th class="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+        <p class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+          Date
+        </p>
+      </th>
+      <th class="p-4 border-b border-blue-gray-100 bg-blue-gray-50">
+        <p class="block font-sans text-sm antialiased font-normal leading-none text-blue-gray-900 opacity-70">
+          Temperature
+        </p>
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for forecast in forecasts %}
+    <tr class="bg-blue-gray-50/50">
+      <td class="p-4">
+        <p class="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+          {{ forecast.date }}
+        </p>
+      </td>
+      <td class="p-4">
+        <p class="block font-sans text-sm antialiased font-normal leading-normal text-blue-gray-900">
+          {{ forecast.temperature }}
+        </p>
+    </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
