@@ -1,6 +1,6 @@
 # Weather
 
-This is a repo that implements a basic weather forecast server in both `golang` and `Rust`. Both servers offer the same basic functionality:
+This is a repo that implements a basic weather forecast server in both `golang` and `Rust` via the `openmeteo` API. Both servers offer the same basic functionality:
 
 - `/` endpoint, which provides a form to query the forecast for a certain city
 - `/weather` endpoint, which shows the forecast
