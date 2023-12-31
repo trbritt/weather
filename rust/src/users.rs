@@ -1,9 +1,8 @@
 use std::str::from_utf8;
 
 use axum::{async_trait, extract::FromRequestParts};
-use axum::http::request::Parts;
+use axum::http::{StatusCode, request::Parts};
 use base64::{Engine as _, engine::general_purpose};
-use reqwest::StatusCode;
 
 pub struct User;
 

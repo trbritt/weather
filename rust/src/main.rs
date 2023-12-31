@@ -2,6 +2,11 @@ use std::net::SocketAddr;
 use axum::{routing::get, Router, extract::{Query, State}};
 use anyhow::Context;
 use sqlx::PgPool;
+use tokio::net::TcpListener;
+use tower_http::{
+    services::ServeDir,
+    trace::TraceLayer,
+};
 // use axum_macros;
 mod users;
 use crate::users::User;
@@ -85,22 +90,28 @@ async fn stats(_user: User, State(pool): State<PgPool>) -> Result<StatsTemplate,
 	Ok(StatsTemplate { cities })
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() -> anyhow::Result<()>{
     let db_connection_str = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
     let pool = sqlx::PgPool::connect(&db_connection_str)
         .await
         .context("can't connect to database")?;
-    
+    let assets_path = std::env::current_dir().unwrap();
     let app = Router::new()
         .route("/", get(index))
         .route("/weather", get(weather))
         .route("/stats", get(stats))
+        .nest_service(
+            "/assets",
+            ServeDir::new(format!("{}/assets", assets_path.to_str().unwrap())),
+        )      
+        .layer(TraceLayer::new_for_http())
         .with_state(pool);
 
     let addr = SocketAddr::from(([127,0,0,1],8080));
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+    let listener = TcpListener::bind(addr).await.unwrap();
+    tracing::debug!("listening on {}", listener.local_addr().unwrap());
+    axum::serve(listener, app.into_make_service())
         .await?;
 
     Ok(())

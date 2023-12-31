@@ -1,6 +1,6 @@
-use axum::response::{IntoResponse, Response, Html};
+use axum::response::{IntoResponse, Response};
+use axum::http::StatusCode;
 use askama::Template;
-use reqwest::StatusCode;
 use serde::Deserialize;
 use anyhow;
 use sqlx;
@@ -112,24 +112,24 @@ impl WeatherDisplay {
     }
 }
 
-impl IntoResponse for WeatherDisplay {
-    fn into_response(self) -> Response {
-        let body = Html(self.render().unwrap()); // Use the render method from the askama template
-        body.into_response()
-    }
-}
-impl IntoResponse for IndexTemplate {
-    fn into_response(self) -> Response {
-        let body = Html(self.render().unwrap()); // Use the render method from the askama template
-        body.into_response()
-    }
-}
-impl IntoResponse for StatsTemplate {
-    fn into_response(self) -> Response {
-        let body = Html(self.render().unwrap()); // Use the render method from the askama template
-        body.into_response()
-    }
-}
+// impl IntoResponse for WeatherDisplay {
+//     fn into_response(self) -> Response {
+//         let body = Html(self.render().unwrap()); // Use the render method from the askama template
+//         body.into_response()
+//     }
+// }
+// impl IntoResponse for IndexTemplate {
+//     fn into_response(self) -> Response {
+//         let body = Html(self.render().unwrap()); // Use the render method from the askama template
+//         body.into_response()
+//     }
+// }
+// impl IntoResponse for StatsTemplate {
+//     fn into_response(self) -> Response {
+//         let body = Html(self.render().unwrap()); // Use the render method from the askama template
+//         body.into_response()
+//     }
+// }
 // below is a version of the weather handler that uses a mix of parsing and handler logic.
 // this is not very rust-y, so instead we opt to do the parsing logic in the constructor of 
 // the Weatherdisplay struct! See above
