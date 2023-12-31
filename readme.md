@@ -25,7 +25,7 @@ These programs can be run with `go run` or `cargo run` from the respective direc
 
 ## Golang
 
-The `go` version of this server is much more "compact" in terms of file structure and import requirements, due to the fact that networking is more of a priority for gophers. To render the frontend, we use the `gin` framework, which is pretty complete and useful. This version of the server is compact, but any heavy computation needed for API requests, for example, will be limited by the other bugs/features of the language.
+The `go` version of this server is much more "compact" in terms of file structure and import requirements, due to the fact that networking is more of a priority for gophers. To render the frontend, we use the `gin` framework, which is pretty complete and useful. This version of the server is compact, but any heavy computation needed for API requests, for example, will be limited by the other bugs/features of the language. Concurrency is handled by the built-in goroutines which, for a built-in tool, are notoriously extremely performant.
 
 Being so compact, the `gin` engine also contains templating, for example, which is nice. Current development state is basic functionality (including `postgres` querying), but no `htmx` or styling.
 
