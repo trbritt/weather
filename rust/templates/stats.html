@@ -1,25 +1,27 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-	<head>
-		<meta charset="UTF-8" />
-		<title>Latest Queries</title>
-	</head>
+  <head>
+    <link href="/assets/main.css" rel="stylesheet" />
+    <link href="https://rsms.me/inter/inter.css" rel="stylesheet" />
+    <meta charset="UTF-8" />
+    <title>Latest Queries</title>
+  </head>
 
-	<body>
-		<h1>Latest Lat/Long Lookups</h1>
-		<table border="1">
-			<thead>
-				<tr>
-					<th>Cities</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for city in cities %}
-				<tr>
-					<td>{{ city.name }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</body>
+  <body>
+    <h1>Latest Lat/Long Lookups</h1>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>Cities</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for city in cities %}
+        <tr>
+          <td>{{ city.name }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </body>
 </html>
