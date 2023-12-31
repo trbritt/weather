@@ -90,14 +90,21 @@ async fn stats(_user: User, State(pool): State<PgPool>) -> Result<StatsTemplate,
 	Ok(StatsTemplate { cities })
 }
 
+async fn hello_from_the_server() -> &'static str {
+    "Hello!"
+}
+
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() -> anyhow::Result<()>{
     let db_connection_str = std::env::var("DATABASE_URL").context("DATABASE_URL must be set")?;
     let pool = sqlx::PgPool::connect(&db_connection_str)
         .await
         .context("can't connect to database")?;
+    let api_router = Router::new().route("/hello", get(hello_from_the_server));
+
     let assets_path = std::env::current_dir().unwrap();
     let app = Router::new()
+        .nest("/api", api_router)
         .route("/", get(index))
         .route("/weather", get(weather))
         .route("/stats", get(stats))
