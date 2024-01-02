@@ -2,8 +2,7 @@ use axum::response::{IntoResponse, Response};
 use axum::http::StatusCode;
 use askama::Template;
 use serde::Deserialize;
-use anyhow;
-use sqlx;
+
 
 // Make our own error that wraps `anyhow::Error`.
 pub struct AppError(anyhow::Error);
